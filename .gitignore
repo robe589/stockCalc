@@ -1,0 +1,4 @@
+vendor/
+.bundle/config
+myid.rb
+data/
