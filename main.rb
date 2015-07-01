@@ -28,13 +28,19 @@ def main()
 		beforeday=today-sub
 		subList=Hash.new
 		codeList.each do |code|
-			price=JpStock.historical_prices(:code=>code,:start_date=>today-sub,:end_date=>today)
-			pp price
+			begin
+				error=0
+				begin
+					price=JpStock.historical_prices(:code=>code,:start_date=>today-sub,:end_date=>today)
+				rescue OpenURI::HTTPError
+					puts 'OpenUri::HTTPError'
+					error=1
+				end
+			end while error==1
 			if price[0] ==nil
 				next
 			end
 			puts code
-			pp price
 			begin
 				diff=price[0].close-price[1].close
 			rescue NoMethodError
@@ -73,7 +79,7 @@ end
 def getStockCodeList()
 	csv=CSV.open('stockCodeList.csv',"w")
 	stockCodeList=Array.new
-	for code in 1000..1500 do
+	for code in 1000..9999 do
 		if JpStock.sec2edi(:code=> code.to_s) 
 			str=code.to_s
 			stockCodeList.push(str)
