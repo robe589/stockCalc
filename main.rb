@@ -15,6 +15,11 @@ def main()
 	when '-list' then
 		getStockCodeList()
 	else
+		nikkei225List=getNikkei225CompositeList()
+		if nikkei225List ==false 
+			puts '日経225リスト取得失敗\n'
+			return -1
+		end
 		codeList=CSV.read('stockCodeList.csv')
 		codeList=codeList[0]
 		p codeList
@@ -86,6 +91,42 @@ def getStockCodeList()
 		end
 	end
 	csv<<stockCodeList
+end
+
+def getNikkei225CompositeList()
+	page=0
+	list=Hash.new
+	begin
+		page+=1
+		isNextPage=false
+		html=getHtmlData('http://www.nikkei.com/markets/kabu/nidxprice.aspx?index=NAVE&ResultFlag=1&DisplayType=0&GCode=35,37,41,01,03,05,07,09,11,13,15,17,19,21,23,25,27,29,31,33,43,45,47,49,51,52,53,55,57,59,61,63,65,67,69,71&PageNo='+page.to_s)
+
+		html.xpath('//div[@class="hyo-text2 padd_left5"]').each_with_index do |node,i|
+			if i%2 ==0 
+				@code=node.text
+			else
+				list[@code]=node.text
+			end
+		end
+        
+		html.xpath('//li[@class="nextPageLink"]/a').each do |i|
+			isNextPage=true
+		end
+	end while isNextPage==true
+	
+	if list.length !=225
+		return false
+	end
+	
+	return list;
+end
+
+def getHtmlData(url)	
+	html=open(url).read
+	doc=Nokogiri::HTML.parse(html,nil,'utf-8')
+	#p doc.title
+	
+	return doc
 end
 
 main()
