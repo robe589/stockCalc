@@ -97,16 +97,17 @@ def makeHtmlSourceMatrix(head,list)
 
 	matrix=Array.new
 	#表のヘッドを作成
-	matrix[0]=Array.new
-	matrix[0][0]=""
+	head.insert(0,"")
 	head.each_with_index do |data,i|
-		matrix[i+1]=Array.new
-		matrix[i+1][0]=data.to_s
+		matrix[i]=Array.new
+		matrix[i][0]=data
 	end
-	
-	list['all'].keys.each_with_index do |data,i|
-		matrix[0][i+1]=data
+
+	values=list.values
+	values[0].keys.each do |data|
+		matrix[0].push(data)
 	end
+	#表のデータを作成
 	list.each_with_index do |(key,data),i|
 		data.each_with_index do |(key1,data2),j|
 			matrix[i+1][j+1]=data2
@@ -114,8 +115,8 @@ def makeHtmlSourceMatrix(head,list)
 	end
 	pp matrix
 
+	#表配列をHTMLソースに変換
 	htmlSource+='<table border="1" rules="all">'
-	#表のデータ部分を作成
 	matrix.each do |data|
 		htmlSource+='<tr>'
 		data.each do |data2|
