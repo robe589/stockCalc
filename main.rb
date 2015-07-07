@@ -223,15 +223,6 @@ end
 #メールを作成、送信
 def sendMail(status,average,htmlSource)
 	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
-	#送信テキストを作成
-	sendText=String.new
-	sendText+='全銘柄数は'+status[:all].to_s+"\t"
-	sendText+='金額平均は'+average[:all].to_s+"\n"
-	sendText+='上昇銘柄数は'+status[:up].to_s+"\t"
-	sendText+='金額平均は'+average[:up].to_s+"\n"
-	sendText+='下降銘柄数は'+status[:down].to_s+"\t"
-	sendText+='金額平均は'+average[:down].to_s+"\n"
-	sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\t"
 	#メール送信
 	text_html =Mail::Part.new do
 		content_type 'text/html; charset=UTF-8'
@@ -240,7 +231,7 @@ def sendMail(status,average,htmlSource)
 	gmailSend.setHtmlPart text_html
 	sendAddress='stockInfo589@gmail.com'
 	subject='本日の市場状況'
-	gmailSend.sendMail(sendAddress,subject,sendText)
+	gmailSend.sendMail(sendAddress,subject," ")
 end
 
 main()
