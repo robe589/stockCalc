@@ -2,28 +2,32 @@
 require 'bundler'
 Bundler.require
 
-#require './account.rb'
+require './myid.rb'
 
 class GmailSend
-	@@mail = Mail.new
 	def initialize(address,password)
-		@@options = {:address=> "smtp.gmail.com",
+		@mail = Mail.new
+		@options = {:address=> "smtp.gmail.com",
 					 :port   => 587,
 					 :domain => "smtp.gmail.com",
 					 :user_name=> address,
 					 :password => password,
 					 :authentication=> 'plain',
 					 :enable_starttls_auto => true  }
-		@@mail.charset='utf-8'
-		@@mail.from address
+		@mail.charset='utf-8'
+		@mail.from address
+	end
+
+	def setHtmlPart(html)
+		@mail.html_part=html
 	end
 
 	def sendMail(sendAddress,subject,body)
-		@@mail.to=sendAddress
-		@@mail.subject=subject
-		@@mail.body=body
-		@@mail.delivery_method(:smtp,@@options)
-		@@mail.deliver
+		@mail.to=sendAddress
+		@mail.subject=subject
+		@mail.body=body
+		@mail.delivery_method(:smtp,@options)
+		@mail.deliver
 	end
 end
 

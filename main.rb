@@ -15,7 +15,7 @@ def main()
 	when '-list' then
 		getStockCodeList()
 	else
-		getNikkei225CompositeList()
+		#getNikkei225CompositeList()
 		marketTrend()
 	end
 end
@@ -72,7 +72,61 @@ def getHtmlData(url)
 	return doc
 end
 
-def marketTrend()	
+def marketTrend()		
+	status=Hash.new
+	average=Hash.new
+	#株式市場全体の状態を計算
+	status['nikkei225'],average['nikkei225']=calcTrend('stockCodeList.csv')	
+	#日経225の状態を計算
+	status['all'],average['all']=calcTrend('nikkei225CodeList.csv')	
+	#表のHTMLソースを作成
+	htmlSource=makeHtmlSourceMatrix(status.keys,status)
+	htmlSource+=makeHtmlSourceMatrix(average.keys,average)
+	#メールを送信
+	sendMail(status,average,htmlSource)
+	pp status
+	pp average
+end
+
+#HTMLの表を作成
+#@params html 表を取得するサイトのHTMLデータ
+#@params list 表のデータ配列
+#@return 作成したHTMLソース
+def makeHtmlSourceMatrix(head,list)
+	htmlSource=String.new
+
+	matrix=Array.new
+	#表のヘッドを作成
+	matrix[0]=Array.new
+	matrix[0][0]=""
+	head.each_with_index do |data,i|
+		matrix[i+1]=Array.new
+		matrix[i+1][0]=data.to_s
+	end
+	
+	list['all'].keys.each_with_index do |data,i|
+		matrix[0][i+1]=data
+	end
+	list.each_with_index do |(key,data),i|
+		data.each_with_index do |(key1,data2),j|
+			matrix[i+1][j+1]=data2
+		end
+	end
+	pp matrix
+
+	htmlSource+='<table border="1" rules="all">'
+	#表のデータ部分を作成
+	matrix.each do |data|
+		htmlSource+='<tr>'
+		data.each do |data2|
+			htmlSource+='<td>'+data2.to_s+'</td>'
+		end
+		htmlSource+='</tr>'
+	end
+	htmlSource+='</table>'
+end
+
+def calcTrend(csvName)
 	#前営業日を計算
 	today=Date.today
 	if today.wday==1#月曜日の場合
@@ -82,19 +136,17 @@ def marketTrend()
 	end
 	beforeDay=today-sub
 	#それぞれの銘柄の前日と当日の株価の差を計算
-	subList=calcDiffPrice(beforeDay,today)
+	subList=calcDiffPrice(beforeDay,today,csvName)
 	#上昇下降銘柄数をカウント
 	status,diffSum=countStockState(subList)
 	#それぞれの平均を算出
 	average=calcAverage(status,diffSum)
-	#メールを送信
-	sendMail(status,average)
-	pp status
-	pp average
+
+	return status,average
 end
 
-def calcDiffPrice(beforeDay,today)
-	codeList=CSV.read('stockCodeList.csv')
+def calcDiffPrice(beforeDay,today,fileName)
+	codeList=CSV.read(fileName)
 	codeList=codeList[0]
 	p codeList
 	
@@ -149,15 +201,15 @@ end
 def calcAverage(status,diffSum)
 	#それぞれの平均を計算
 	allAverage=(diffSum[:all]/status[:all]).round(1)
-	upAverage=(diffSum[:up]/status[:up]).round(1)
-	downAverage=(diffSum[:down]/status[:down]).round(1)
-	average={:all=>allAverage,:upAverage=>upAverage,:downAverage=>downAverage}
+	upAverage=(status[:up] ==0) ? 0 : (diffSum[:up]/status[:up]).round(1)
+	downAverage=(status[:down] ==0) ? 0 : (diffSum[:down]/status[:down]).round(1)
+	average={:allAverage=>allAverage,:upAverage=>upAverage,:downAverage=>downAverage}
 
 	return average
 end
 
 #メールを作成、送信
-def sendMail(status,average)
+def sendMail(status,average,htmlSource)
 	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
 	#送信テキストを作成
 	sendText=String.new
@@ -169,6 +221,11 @@ def sendMail(status,average)
 	sendText+='金額平均は'+average[:down].to_s+"\n"
 	sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\t"
 	#メール送信
+	text_html =Mail::Part.new do
+		content_type 'text/html; charset=UTF-8'
+		body htmlSource
+	end
+	gmailSend.setHtmlPart text_html
 	sendAddress='stockInfo589@gmail.com'
 	subject='本日の市場状況'
 	gmailSend.sendMail(sendAddress,subject,sendText)
