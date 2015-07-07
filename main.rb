@@ -103,10 +103,21 @@ def makeHtmlSourceMatrix(head,list)
 		matrix[i][0]=data
 	end
 
+	pp matrix
+	
 	values=list.values
 	values[0].keys.each do |data|
 		matrix[0].push(data)
 	end
+	#行の幅を統一するために、ヘッダ部分の文字長を同じ長さに
+	max=matrix[0].max_by{|str| str.length}.length
+	matrix[0].each_with_index do |data,i|
+		diff=max - data.length
+		if diff>0
+			matrix[0][i]=data.to_s.center(max,'-')
+		end
+	end
+	pp matrix
 	#表のデータを作成
 	list.each_with_index do |(key,data),i|
 		data.each_with_index do |(key1,data2),j|
@@ -116,7 +127,7 @@ def makeHtmlSourceMatrix(head,list)
 	pp matrix
 
 	#表配列をHTMLソースに変換
-	htmlSource+='<table border="1" rules="all">'
+	htmlSource+='<table border="1" width="800" style="table-layout: fixed" rules="all">'
 	matrix.each do |data|
 		htmlSource+='<tr>'
 		data.each do |data2|
