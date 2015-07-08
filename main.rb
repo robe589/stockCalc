@@ -19,74 +19,78 @@ def main()
 		if nikkei225List ==false 
 			puts '日経225リスト取得失敗\n'
 			return -1
-		end
-		codeList=CSV.read('stockCodeList.csv')
-		codeList=codeList[0]
-		p codeList
-		
-		today=Date.today
-		if today.wday==1#月曜日の場合
-			sub=3
-		else
-			sub=1
-		end
-		beforeday=today-sub
-		subList=Hash.new
-		codeList.each do |code|
-			begin
-				error=0
-				begin
-					price=JpStock.historical_prices(:code=>code,:start_date=>today-sub,:end_date=>today)
-				rescue OpenURI::HTTPError
-					puts 'OpenUri::HTTPError'
-					error=1
-				end
-			end while error==1
-			if price[0] ==nil
-				next
-			end
-			puts code
-			begin
-				diff=price[0].close-price[1].close
-			rescue NoMethodError
-				diff=0;
-			end
-			subList[code]=diff
-		end
-		status={:up=>0,:down=>0,:unChange=>0,:all=>0}
-		diffSum={:up=>0,:down=>0,:unChange=>0,:all=>0}
-		#上昇下降銘柄をカウント
-		subList.each do |a,diff|
-			if diff ==0
-				status[:unChange]+=1
-				diffSum[:unChange]+=diff
-			elsif diff > 0
-				status[:up]+=1
-				diffSum[:up]+=diff
-			else
-				status[:down]+=1
-				diffSum[:down]+=diff
-			end
-			status[:all]+=1#カウント銘柄数をカウント
-			diffSum[:all]+=diff
-		end
-
-		gmailSend=GmailSend.new($senderAddress,$gmailPassword)
-
-		sendText=String.new
-		sendText+='全銘柄数は'+status[:all].to_s+"\t"
-		sendText+='金額平均は'+(diffSum[:all]/status[:all]).to_s+"\n"
-		sendText+='上昇銘柄数は'+status[:up].to_s+"\t"
-		sendText+='金額平均は'+(diffSum[:up]/status[:up]).to_s+"\n"
-		sendText+='下降銘柄数は'+status[:down].to_s+"\t"
-		sendText+='金額平均は'+(diffSum[:down]/status[:down]).to_s+"\n"
-		sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\t"
-		sendAddress='stockInfo589@gmail.com'
-		subject='本日の市場状況'
-		gmailSend.sendMail(sendAddress,subject,sendText)
-
-		pp status
+		end		
+		margetTrend()
 	end
+end
+
+def margetTrend()
+	codeList=CSV.read('stockCodeList.csv')
+	codeList=codeList[0]
+	p codeList
+	
+	today=Date.today
+	if today.wday==1#月曜日の場合
+		sub=3
+	else
+		sub=1
+	end
+	beforeday=today-sub
+	subList=Hash.new
+	codeList.each do |code|
+		begin
+			error=0
+			begin
+				price=JpStock.historical_prices(:code=>code,:start_date=>today-sub,:end_date=>today)
+			rescue OpenURI::HTTPError
+				puts 'OpenUri::HTTPError'
+				error=1
+			end
+		end while error==1
+		if price[0] ==nil
+			next
+		end
+		puts code
+		begin
+			diff=price[0].close-price[1].close
+		rescue NoMethodError
+			diff=0;
+		end
+		subList[code]=diff
+	end
+	status={:up=>0,:down=>0,:unChange=>0,:all=>0}
+	diffSum={:up=>0,:down=>0,:unChange=>0,:all=>0}
+	#上昇下降銘柄をカウント
+	subList.each do |a,diff|
+		if diff ==0
+			status[:unChange]+=1
+			diffSum[:unChange]+=diff
+		elsif diff > 0
+			status[:up]+=1
+			diffSum[:up]+=diff
+		else
+			status[:down]+=1
+			diffSum[:down]+=diff
+		end
+		status[:all]+=1#カウント銘柄数をカウント
+		diffSum[:all]+=diff
+	end
+
+	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
+
+	sendText=String.new
+	sendText+='全銘柄数は'+status[:all].to_s+"\t"
+	sendText+='金額平均は'+(diffSum[:all]/status[:all]).to_s+"\n"
+	sendText+='上昇銘柄数は'+status[:up].to_s+"\t"
+	sendText+='金額平均は'+(diffSum[:up]/status[:up]).to_s+"\n"
+	sendText+='下降銘柄数は'+status[:down].to_s+"\t"
+	sendText+='金額平均は'+(diffSum[:down]/status[:down]).to_s+"\n"
+	sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\t"
+	sendAddress='stockInfo589@gmail.com'
+	subject='本日の市場状況'
+	gmailSend.sendMail(sendAddress,subject,sendText)
+
+	pp status
 end
 
 def getStockCodeList()
