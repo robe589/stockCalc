@@ -16,10 +16,6 @@ def main()
 		getStockCodeList()
 	else
 		nikkei225List=getNikkei225CompositeList()
-		if nikkei225List ==false 
-			puts '日経225リスト取得失敗\n'
-			return -1
-		end		
 		marketTrend()
 	end
 end
@@ -61,6 +57,7 @@ def getNikkei225CompositeList()
 	end while isNextPage==true
 	
 	if list.length !=225
+		puts '日経225リスト取得失敗\n'
 		return false
 	end
 	
@@ -161,9 +158,8 @@ end
 #メールを作成、送信
 def sendMail(status,average)
 	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
-
-	sendText=String.new
 	#送信テキストを作成
+	sendText=String.new
 	sendText+='全銘柄数は'+status[:all].to_s+"\t"
 	sendText+='金額平均は'+average[:all].to_s+"\n"
 	sendText+='上昇銘柄数は'+status[:up].to_s+"\t"
