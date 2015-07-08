@@ -20,13 +20,14 @@ def main()
 			puts '日経225リスト取得失敗\n'
 			return -1
 		end		
-		margetTrend()
+		marketTrend()
 	end
 end
 
 
 def getStockCodeList()
 	csv=CSV.open('stockCodeList.csv',"w")
+	
 	stockCodeList=Array.new
 	for code in 1000..9999 do
 		if JpStock.sec2edi(:code=> code.to_s) 
@@ -73,7 +74,7 @@ def getHtmlData(url)
 	return doc
 end
 
-def margetTrend()	
+def marketTrend()	
 	#前営業日を計算
 	today=Date.today
 	if today.wday==1#月曜日の場合
