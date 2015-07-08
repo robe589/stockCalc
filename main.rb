@@ -91,6 +91,7 @@ def margetTrend()
 	#メールを送信
 	sendMail(status,average)
 	pp status
+	pp average
 end
 
 def calcDiffPrice(beforeDay,today)
@@ -153,7 +154,7 @@ def calcAverage(status,diffSum)
 	downAverage=(diffSum[:down]/status[:down]).round(1)
 	average={:all=>allAverage,:upAverage=>upAverage,:downAverage=>downAverage}
 
-	return averageList
+	return average
 end
 
 #メールを作成、送信
