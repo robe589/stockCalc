@@ -15,15 +15,13 @@ def main()
 	when '-list' then
 		getStockCodeList()
 	else
-		nikkei225List=getNikkei225CompositeList()
+		getNikkei225CompositeList()
 		marketTrend()
 	end
 end
 
 
-def getStockCodeList()
-	csv=CSV.open('stockCodeList.csv',"w")
-	
+def getStockCodeList()	
 	stockCodeList=Array.new
 	for code in 1000..9999 do
 		if JpStock.sec2edi(:code=> code.to_s) 
@@ -31,6 +29,7 @@ def getStockCodeList()
 			stockCodeList.push(str)
 		end
 	end
+	csv=CSV.open('stockCodeList.csv',"w")
 	csv<<stockCodeList
 end
 
@@ -61,7 +60,9 @@ def getNikkei225CompositeList()
 		return false
 	end
 	
-	return list;
+	csv=CSV.open('nikkei225CodeList.csv',"w")
+	csv<<list.keys
+	csv<<list.values
 end
 
 def getHtmlData(url)	
