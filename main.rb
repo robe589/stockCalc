@@ -24,22 +24,6 @@ def main()
 	end
 end
 
-def margetTrend()	
-	today=Date.today
-	if today.wday==1#月曜日の場合
-		sub=3#金曜日の株価を取得したいので、３日前
-	else
-		sub=1
-	end
-	beforeDay=today-sub
-	#それぞれの銘柄の前日と当日の株価の差を計算
-	subList=calcDiffPrice(beforeDay,today)
-	#上昇下降銘柄数をカウント
-	status,diffSum=countStockState(subList)	
-	#メールを送信
-	sendMail(status,diffSum)
-	pp status
-end
 
 def getStockCodeList()
 	csv=CSV.open('stockCodeList.csv',"w")
@@ -87,6 +71,26 @@ def getHtmlData(url)
 	doc=Nokogiri::HTML.parse(html,nil,'utf-8')
 	
 	return doc
+end
+
+def margetTrend()	
+	#前営業日を計算
+	today=Date.today
+	if today.wday==1#月曜日の場合
+		sub=3#金曜日の株価を取得したいので、３日前
+	else
+		sub=1
+	end
+	beforeDay=today-sub
+	#それぞれの銘柄の前日と当日の株価の差を計算
+	subList=calcDiffPrice(beforeDay,today)
+	#上昇下降銘柄数をカウント
+	status,diffSum=countStockState(subList)
+	#それぞれの平均を算出
+	average=calcAverage(status,diffSum)
+	#メールを送信
+	sendMail(status,average)
+	pp status
 end
 
 def calcDiffPrice(beforeDay,today)
@@ -142,23 +146,28 @@ def countStockState(subList)
 	return status,diffSum
 end
 
-#メールを作成、送信
-def sendMail(status,diffSum)
-	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
-
-	sendText=String.new
-
+def calcAverage(status,diffSum)
 	#それぞれの平均を計算
 	allAverage=(diffSum[:all]/status[:all]).round(1)
 	upAverage=(diffSum[:up]/status[:up]).round(1)
 	downAverage=(diffSum[:down]/status[:down]).round(1)
+	average={:all=>allAverage,:upAverage=>upAverage,:downAverage=>downAverage}
+
+	return averageList
+end
+
+#メールを作成、送信
+def sendMail(status,average)
+	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
+
+	sendText=String.new
 	#送信テキストを作成
 	sendText+='全銘柄数は'+status[:all].to_s+"\t"
-	sendText+='金額平均は'+allAverage.to_s+"\n"
+	sendText+='金額平均は'+average[:all].to_s+"\n"
 	sendText+='上昇銘柄数は'+status[:up].to_s+"\t"
-	sendText+='金額平均は'+upAverage.to_s+"\n"
+	sendText+='金額平均は'+average[:up].to_s+"\n"
 	sendText+='下降銘柄数は'+status[:down].to_s+"\t"
-	sendText+='金額平均は'+downAverage.to_s+"\n"
+	sendText+='金額平均は'+average[:down].to_s+"\n"
 	sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\t"
 	#メール送信
 	sendAddress='stockInfo589@gmail.com'
