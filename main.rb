@@ -54,25 +54,33 @@ def main()
 			subList[code]=diff
 		end
 		status={:up=>0,:down=>0,:unChange=>0,:all=>0}
+		diffSum={:up=>0,:down=>0,:unChange=>0,:all=>0}
 		#上昇下降銘柄をカウント
 		subList.each do |a,diff|
 			if diff ==0
 				status[:unChange]+=1
+				diffSum[:unChange]+=diff
 			elsif diff > 0
 				status[:up]+=1
+				diffSum[:up]+=diff
 			else
 				status[:down]+=1
+				diffSum[:down]+=diff
 			end
 			status[:all]+=1#カウント銘柄数をカウント
+			diffSum[:all]+=diff
 		end
 
 		gmailSend=GmailSend.new($senderAddress,$gmailPassword)
 
 		sendText=String.new
-		sendText+='全銘柄数は'+status[:all].to_s+"\n"
-		sendText+='上昇銘柄数は'+status[:up].to_s+"\n"
-		sendText+='下降銘柄数は'+status[:down].to_s+"\n"
-		sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\n"
+		sendText+='全銘柄数は'+status[:all].to_s+"\t"
+		sendText+='金額平均は'+(diffSum[:all]/status[:all]).to_s+"\n"
+		sendText+='上昇銘柄数は'+status[:up].to_s+"\t"
+		sendText+='金額平均は'+(diffSum[:up]/status[:up]).to_s+"\n"
+		sendText+='下降銘柄数は'+status[:down].to_s+"\t"
+		sendText+='金額平均は'+(diffSum[:down]/status[:down]).to_s+"\n"
+		sendText+='変化なし銘柄数は'+status[:unChange].to_s+"\t"
 		sendAddress='stockInfo589@gmail.com'
 		subject='本日の市場状況'
 		gmailSend.sendMail(sendAddress,subject,sendText)
