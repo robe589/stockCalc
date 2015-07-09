@@ -14,8 +14,8 @@ def main()
 	case command
 	when '-list' then
 		getStockCodeList()
+		getNikkei225CompositeList()
 	else
-		#getNikkei225CompositeList()
 		marketTrend()
 	end
 end
