@@ -262,17 +262,25 @@ def calcAverageRatio(status,statusList,priceList)
 		end
 		addPriceList[:allRatio]+=price[:ratio]
 	end
-	allAverageRatio=addPriceList[:allRatio]/status[:all]
-	upAverageRatio=addPriceList[:upRatio]/status[:up]
-	downAverageRatio=addPriceList[:downRatio]/status[:up]
-	allAverageRatio=BigDecimal.new(allAverageRatio.to_s).floor(1).to_f.to_s
-	upAverageRatio=BigDecimal.new(upAverageRatio.to_s).floor(1).to_f.to_s
-	downAverageRatio=BigDecimal.new(downAverageRatio.to_s).floor(1).to_f.to_s
-	averageRatio={:allAvergeRatio=>allAverageRatio,
+	
+	allAverageRatio=calcRatio(addPriceList[:allRatio],status[:all])
+	upAverageRatio=calcRatio(addPriceList[:upRatio],status[:up])
+	downAverageRatio=calcRatio(addPriceList[:downRatio],status[:down])
+		averageRatio={:allAvergeRatio=>allAverageRatio,
 				  :upAverageRatio=>upAverageRatio,
 				  :downAverageRatio=>downAverageRatio}
 
 	return averageRatio
+end
+
+def calcRatio(num1,num2)
+	if num2==0
+		return 0
+	end
+	num=num1/num2
+	#小数点1桁までの文字列に変換
+	num=BigDecimal.new(num.to_s).floor(1).to_f.to_s
+	num+='%'
 end
 
 #メールを作成、送信
