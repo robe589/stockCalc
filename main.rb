@@ -4,6 +4,7 @@ Bundler.require
 require 'pp'
 require 'csv'
 require 'date'
+require 'bigdecimal'
 
 require './GmailSend'
 require './myid'
@@ -75,13 +76,15 @@ end
 def marketTrend()		
 	status=Hash.new
 	average=Hash.new
+	averageRatio=Hash.new
 	#株式市場全体の状態を計算
-	status['nikkei225'],average['nikkei225']=calcTrend('stockCodeList.csv')	
+	status['nikkei225'],average['nikkei225'],averageRatio['nikkei225']=calcTrend('stockCodeList.csv')	
 	#日経225の状態を計算
-	status['all'],average['all']=calcTrend('nikkei225CodeList.csv')	
+	status['all'],average['all'],averageRatio[:all]=calcTrend('nikkei225CodeList.csv')	
 	#表のHTMLソースを作成
 	htmlSource=makeHtmlSourceMatrix(status.keys,status)
 	htmlSource+=makeHtmlSourceMatrix(average.keys,average)
+	htmlSource+=makeHtmlSourceMatrix(averageRatio.keys,averageRatio)
 	#メールを送信
 	sendMail(status,average,htmlSource)
 	pp status
@@ -139,6 +142,21 @@ def makeHtmlSourceMatrix(head,list)
 end
 
 def calcTrend(csvName)
+	priceList=getPriceList(csvName)
+	pp priceList
+	#それぞれの銘柄の前日と当日の株価の差を計算
+	subList=calcDiffPrice(priceList)
+	#上昇下降銘柄数をカウント
+	status,statusList,diffSum=countStockState(subList)
+	#それぞれの平均を算出
+	averagePrice=calcAverage(status,diffSum)
+	#それぞれの上下降率の平均を算出
+	averageRatio=calcAverageRatio(status,statusList,priceList)
+
+	return status,averagePrice,averageRatio
+end
+
+def getPriceList(csvName)
 	#前営業日を計算
 	today=Date.today
 	if today.wday==1#月曜日の場合
@@ -147,23 +165,14 @@ def calcTrend(csvName)
 		sub=1
 	end
 	beforeDay=today-sub
-	#それぞれの銘柄の前日と当日の株価の差を計算
-	subList=calcDiffPrice(beforeDay,today,csvName)
-	#上昇下降銘柄数をカウント
-	status,diffSum=countStockState(subList)
-	#それぞれの平均を算出
-	average=calcAverage(status,diffSum)
-
-	return status,average
-end
-
-def calcDiffPrice(beforeDay,today,fileName)
-	codeList=CSV.read(fileName)
+	#銘柄リストを追加
+	codeList=CSV.read(csvName)
 	codeList=codeList[0]
 	p codeList
-	
-	subList=Hash.new
+	#銘柄別価格リストを作成
+	priceList=Hash.new
 	codeList.each do |code|
+		pp code
 		begin
 			error=0
 			begin
@@ -176,38 +185,56 @@ def calcDiffPrice(beforeDay,today,fileName)
 		if price[0] ==nil
 			next
 		end
-		puts code
+		priceList[code]=Hash.new
+		priceList[code][:closePricePastDay]=price[1].close
+		priceList[code][:closePriceNowDay]=price[0].close
+	end
+	
+	return priceList
+end
+
+def calcDiffPrice(priceList)
+		
+	subList=Hash.new
+	priceList.keys.each do |code|
+		pp code
 		begin
-			diff=price[0].close-price[1].close
+			diff=priceList[code][:closePriceNowDay]-priceList[code][:closePricePastDay]
 		rescue NoMethodError
 			diff=0;
 		end
 		subList[code]=diff
 	end
 
+	pp subList
 	return subList
 end 
 
 def countStockState(subList)
 	status={:up=>0,:down=>0,:unChange=>0,:all=>0}
 	diffSum={:up=>0,:down=>0,:unChange=>0,:all=>0}
+	statusList={:up=>[],:down=>[],:unChange=>[],:all=>[]}
 	#上昇下降銘柄をカウント
-	subList.each do |a,diff|
+	subList.each do |code,diff|
 		if diff ==0
 			status[:unChange]+=1
 			diffSum[:unChange]+=diff
+			statusList[:unChange].push(code)
 		elsif diff > 0
 			status[:up]+=1
 			diffSum[:up]+=diff
+			statusList[:up].push(code)
 		else
 			status[:down]+=1
 			diffSum[:down]+=diff
+			statusList[:down].push(code)
 		end
 		status[:all]+=1#カウント銘柄数をカウント
 		diffSum[:all]+=diff
+		statusList[:all].push(code)
 	end
 
-	return status,diffSum
+	return status,statusList,diffSum
 end
 
 def calcAverage(status,diffSum)
@@ -218,6 +245,34 @@ def calcAverage(status,diffSum)
 	average={:allAverage=>allAverage,:upAverage=>upAverage,:downAverage=>downAverage}
 
 	return average
+end
+
+def calcAverageRatio(status,statusList,priceList)
+	ratioList=Hash.new
+	addPriceList={:upRatio=>0.0,:downRatio=>0.0,:allRatio=>0.0}
+	priceList.each do |key,price|
+		pp price
+		diff=price[:closePriceNowDay]-price[:closePricePastDay]
+		price[:ratio]=diff/price[:closePricePastDay]*100
+		if diff>0
+			addPriceList[:upRatio]+=price[:ratio]
+		elsif diff<0
+			pp price
+			addPriceList[:downRatio]+=price[:ratio]
+		end
+		addPriceList[:allRatio]+=price[:ratio]
+	end
+	allAverageRatio=addPriceList[:allRatio]/status[:all]
+	upAverageRatio=addPriceList[:upRatio]/status[:up]
+	downAverageRatio=addPriceList[:downRatio]/status[:up]
+	allAverageRatio=BigDecimal.new(allAverageRatio.to_s).floor(1).to_f.to_s
+	upAverageRatio=BigDecimal.new(upAverageRatio.to_s).floor(1).to_f.to_s
+	downAverageRatio=BigDecimal.new(downAverageRatio.to_s).floor(1).to_f.to_s
+	averageRatio={:allAvergeRatio=>allAverageRatio,
+				  :upAverageRatio=>upAverageRatio,
+				  :downAverageRatio=>downAverageRatio}
+
+	return averageRatio
 end
 
 #メールを作成、送信
