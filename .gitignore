@@ -3,3 +3,4 @@ vendor/
 myid.rb
 data/
 *.csv
+tags
