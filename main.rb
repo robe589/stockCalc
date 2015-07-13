@@ -165,8 +165,7 @@ def getPriceList(csvName)
 		beforeDay-=1
 		pp HolidayJp.holiday?(beforeDay)
 	end
-	pp beforeDay
-	loop{}
+	puts "beforeDay"+beforeDay.to_s	
 	#銘柄リストを追加
 	codeList=CSV.read(csvName)
 	codeList=codeList[0]
