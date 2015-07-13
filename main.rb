@@ -182,7 +182,7 @@ def getPriceList(csvName)
 				error=1
 			end
 		end while error==1
-		if price[0] ==nil
+		if price[0] ==nil or price[1] ==nil
 			next
 		end
 		priceList[code]=Hash.new
