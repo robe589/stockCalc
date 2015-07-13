@@ -239,7 +239,7 @@ end
 
 def calcAverage(status,diffSum)
 	#それぞれの平均を計算
-	allAverage=(diffSum[:all]/status[:all]).round(1)
+	allAverage= (status[:all]==0) ? 0: (diffSum[:all]/status[:all]).round(1) 
 	upAverage=(status[:up] ==0) ? 0 : (diffSum[:up]/status[:up]).round(1)
 	downAverage=(status[:down] ==0) ? 0 : (diffSum[:down]/status[:down]).round(1)
 	average={:allAverage=>allAverage,:upAverage=>upAverage,:downAverage=>downAverage}
