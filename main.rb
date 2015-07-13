@@ -159,14 +159,11 @@ end
 def getPriceList(csvName)
 	#前営業日を計算
 	today=Date.today
-	if today.wday==1#月曜日の場合
-		sub=3#金曜日の株価を取得したいので、３日前
-	else
-		sub=1
-	end
-	beforeDay=today-sub
-	while(HolidayJp.holiday?(beforeDay)==true)
+	beforeDay=today-1
+    pp HolidayJp.holiday?(beforeDay)
+	while(HolidayJp.holiday?(beforeDay)!=nil or beforeDay.wday ==0 or beforeDay.wday ==6)
 		beforeDay-=1
+		pp HolidayJp.holiday?(beforeDay)
 	end
 	pp beforeDay
 	loop{}
