@@ -206,7 +206,6 @@ def calcDiffPrice(priceList)
 		subList[code]=diff
 	end
 
-	pp subList
 	return subList
 end 
 
@@ -251,13 +250,11 @@ def calcAverageRatio(status,statusList,priceList)
 	ratioList=Hash.new
 	addPriceList={:upRatio=>0.0,:downRatio=>0.0,:allRatio=>0.0}
 	priceList.each do |key,price|
-		pp price
 		diff=price[:closePriceNowDay]-price[:closePricePastDay]
 		price[:ratio]=diff/price[:closePricePastDay]*100
 		if diff>0
 			addPriceList[:upRatio]+=price[:ratio]
 		elsif diff<0
-			pp price
 			addPriceList[:downRatio]+=price[:ratio]
 		end
 		addPriceList[:allRatio]+=price[:ratio]
