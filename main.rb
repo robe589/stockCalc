@@ -78,9 +78,9 @@ def marketTrend()
 	average=Hash.new
 	averageRatio=Hash.new
 	#株式市場全体の状態を計算
-	status['nikkei225'],average['nikkei225'],averageRatio['nikkei225']=calcTrend('stockCodeList.csv')	
+	status[:all],average[:all],averageRatio[:all]=calcTrend('stockCodeList.csv')	
 	#日経225の状態を計算
-	status['all'],average['all'],averageRatio[:all]=calcTrend('nikkei225CodeList.csv')	
+	status[:nikkei225],average[:nikkei225],averageRatio[:nikkei225]=calcTrend('nikkei225CodeList.csv')	
 	#表のHTMLソースを作成
 	htmlSource=makeHtmlSourceMatrix(status.keys,status)
 	htmlSource+=makeHtmlSourceMatrix(average.keys,average)
@@ -205,7 +205,8 @@ def calcDiffPrice(priceList)
 		end
 		subList[code]=diff
 	end
-
+	
+	pp subList
 	return subList
 end 
 
