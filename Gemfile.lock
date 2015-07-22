@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    holiday_jp (0.4.3)
     jpstock (0.6.7)
       nokogiri
     mail (2.6.3)
@@ -14,6 +15,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  holiday_jp
   jpstock
   mail
   nokogiri
