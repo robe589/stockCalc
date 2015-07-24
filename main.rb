@@ -81,6 +81,9 @@ def marketTrend()
 	status[:all],average[:all],averageRatio[:all]=calcTrend('stockCodeList.csv')	
 	#日経225の状態を計算
 	status[:nikkei225],average[:nikkei225],averageRatio[:nikkei225]=calcTrend('nikkei225CodeList.csv')	
+	#計算した値に数値を付与
+	joinUnitToNum(status[:all],average[:all],averageRatio[:all])
+	joinUnitToNum(status[:nikkei225],average[:nikkei225],averageRatio[:nikkei225])
 	#表のHTMLソースを作成
 	htmlSource=makeHtmlSourceMatrix(status.keys,status)
 	htmlSource+=makeHtmlSourceMatrix(average.keys,average)
@@ -89,6 +92,26 @@ def marketTrend()
 	sendMail(status,average,htmlSource)
 	pp status
 	pp average
+end
+
+def joinUnitToNum(status,average,averageRatio) 
+	#数値に単位を付与
+	status.each do |key,num|
+		status[key]=num.to_s+'銘柄'
+	end
+	average.each do |key,num|
+		average[key]=num.to_s+'円'
+		if num ==0
+		elsif num>0 
+			average[key]+='上昇'
+		else
+			average[key]+='下降'
+		end
+	end
+	averageRatio.each do |key,num|
+		str=num.to_s+'%'
+		averageRatio[key]=str
+	end
 end
 
 #HTMLの表を作成
@@ -234,7 +257,7 @@ def countStockState(subList)
 		diffSum[:all]+=diff
 		statusList[:all].push(code)
 	end
-
+	
 	return status,statusList,diffSum
 end
 
@@ -279,7 +302,6 @@ def calcRatio(num1,num2)
 	num=num1/num2
 	#小数点1桁までの文字列に変換
 	num=BigDecimal.new(num.to_s).floor(1).to_f.to_s
-	num+='%'
 end
 
 #メールを作成、送信
