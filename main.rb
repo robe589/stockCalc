@@ -41,7 +41,7 @@ def getStockCodeList()
 	
 	csv=CSV.open('stockCodeList.csv',"w")
 	csv<<stockCodeList
-    pp stockCodeList.length
+    puts stockCodeList.length+'銘柄取得'
 end
 
 def getNikkei225CompositeList()
