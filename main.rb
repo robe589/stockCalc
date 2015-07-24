@@ -235,7 +235,6 @@ def getPriceList(csvName)
 			end	
 		end
 
-		pp priceToday
 		priceList[code]=Hash.new
 		priceList[code][:closePricePastDay]=priceBefore
 		priceList[code][:closePriceNowDay]=priceToday

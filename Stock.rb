@@ -12,12 +12,6 @@ class Stock
 	#nil:存在するコードではない 空配列:情報がなかった false:取得できなかった
 	def self.getClosePrice(code,date)
 		code=code.to_s
-		#存在する銘柄コードかチェック
-=begin
-		if JpStock.sec2edi(:code=>code)==nil
-			return [false,"errorCode"]
-		end
-=end
 		#株価を取得
 		count=0
 		begin
@@ -25,7 +19,6 @@ class Stock
 			begin 
 				list={:code=>code,:start_date=>date,:end_date=>date}
 				stockInfo=JpStock.historical_prices list
-				pp stockInfo
 				stockInfo=stockInfo[0]
 				if stockInfo.instance_variable_defined?(:@close)
 					price=stockInfo.close
