@@ -23,7 +23,6 @@ def main()
 	end
 end
 
-
 def getStockCodeList()	
 	stockCodeList=Array.new
 	startDate=Date.new(2015,1,1)
