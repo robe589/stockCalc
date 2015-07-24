@@ -26,14 +26,23 @@ end
 
 def getStockCodeList()	
 	stockCodeList=Array.new
-	for code in 1000..9999 do
-		if JpStock.sec2edi(:code=> code.to_s) 
-			str=code.to_s
-			stockCodeList.push(str)
-		end
+	startDate=Date.new(2015,1,1)
+	endDate=Date.today
+
+	#jpstock内部の上場企業情報を更新
+	JpStock.brand({:update=>0})
+
+	#上場企業の情報を取得
+	stockInfo=JpStock.brand({})
+	
+	stockCodeList=Array.new
+	stockInfo.each do |data|
+		stockCodeList.push(data.code)
 	end
+	
 	csv=CSV.open('stockCodeList.csv',"w")
 	csv<<stockCodeList
+    pp stockCodeList.length
 end
 
 def getNikkei225CompositeList()
