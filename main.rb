@@ -85,8 +85,12 @@ def marketTrend()
 	joinUnitToNum(status[:all],average[:all],averageRatio[:all])
 	joinUnitToNum(status[:nikkei225],average[:nikkei225],averageRatio[:nikkei225])
 	#表のHTMLソースを作成
-	htmlSource=makeHtmlSourceMatrix(status.keys,status)
+	htmlSource=String.new
+	htmlSource+='上昇下降銘柄表<br>'
+	htmlSource+=makeHtmlSourceMatrix(status.keys,status)
+	htmlSource+='株価変化平均表<br>'
 	htmlSource+=makeHtmlSourceMatrix(average.keys,average)
+	htmlSource+='株価変化率平均表<br>'
 	htmlSource+=makeHtmlSourceMatrix(averageRatio.keys,averageRatio)
 	#メールを送信
 	sendMail(status,average,htmlSource)
