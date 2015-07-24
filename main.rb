@@ -1,6 +1,7 @@
 #coding: utf-8
 require 'bundler'
 Bundler.require
+
 require 'pp'
 require 'csv'
 require 'date'
@@ -8,6 +9,7 @@ require 'bigdecimal'
 
 require './GmailSend'
 require './myid'
+require './Stock'
 
 def main()	
 	command=ARGV[0]
@@ -201,21 +203,34 @@ def getPriceList(csvName)
 	priceList=Hash.new
 	codeList.each do |code|
 		pp code
-		begin
-			error=0
-			begin
-				price=JpStock.historical_prices(:code=>code,:start_date=>beforeDay,:end_date=>today)
-			rescue OpenURI::HTTPError
-				puts 'OpenUri::HTTPError'
-				error=1
+		priceToday=Stock.getClosePrice(code,today)
+		priceBefore=Stock.getClosePrice(code,beforeDay)
+		if priceToday.class ==Array 
+			if priceToday[1]=="notClose"
+				puts '終値がついていなかった'
+				next	
+			elsif priceToday[1]=="HTTPError"
+				puts 'HTTPError'
+				return false
+			elsif priceToday[1]=="errorCode"
+				puts '銘柄が存在しない'
+				next
 			end
-		end while error==1
-		if price[0] ==nil or price[1] ==nil
-			next
 		end
+		if priceBefore.class ==Array 
+			if priceBefore[1]=="notClose"
+				puts '終値がついていなかった'
+				next	
+			elsif priceBefore[1]=="HTTPError"
+				puts 'HTTPError'
+				return false
+			end	
+		end
+
+		pp priceToday
 		priceList[code]=Hash.new
-		priceList[code][:closePricePastDay]=price[1].close
-		priceList[code][:closePriceNowDay]=price[0].close
+		priceList[code][:closePricePastDay]=priceBefore
+		priceList[code][:closePriceNowDay]=priceToday
 	end
 	
 	return priceList
