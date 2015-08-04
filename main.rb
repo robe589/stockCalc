@@ -87,6 +87,14 @@ def marketTrend()
 	status=Hash.new
 	average=Hash.new
 	averageRatio=Hash.new
+	htmlSource=String.new
+	#指標データを取得
+	indexMatrix=getIndex()
+	indexMatrix.slice!(1,4)
+	indexMatrix.each do |table|
+		pp table
+		htmlSource+=makeHtmlSourceMatrixToArray(table)
+	end
 	#株式市場全体の状態を計算
 	status[:all],average[:all],averageRatio[:all]=calcTrend('stockCodeList.csv')	
 	#日経225の状態を計算
@@ -95,7 +103,6 @@ def marketTrend()
 	joinUnitToNum(status[:all],average[:all],averageRatio[:all])
 	joinUnitToNum(status[:nikkei225],average[:nikkei225],averageRatio[:nikkei225])
 	#表のHTMLソースを作成
-	htmlSource=String.new
 	htmlSource+='上昇下降銘柄表<br>'
 	htmlSource+=makeHtmlSourceMatrix(status.keys,status)
 	htmlSource+='株価変化平均表<br>'
@@ -103,9 +110,59 @@ def marketTrend()
 	htmlSource+='株価変化率平均表<br>'
 	htmlSource+=makeHtmlSourceMatrix(averageRatio.keys,averageRatio)
 	#メールを送信
-	sendMail(status,average,htmlSource)
+	sendMail(htmlSource)
 	pp status
 	pp average
+end
+
+def getIndex()
+	url='http://www.bloomberg.co.jp/markets/index.html'
+	html=getHtmlData(url)
+
+	matrix=Array.new
+	html.xpath('//table').each_with_index do |table,i|
+		matrix[i]=Array.new
+		table.xpath('tr').each_with_index do |table1,j|
+			matrix[i][j]=Array.new
+			table1.xpath('th | td').each do |text1|
+				removeText=removeToken(text1.text)
+				matrix[i][j].push(removeText)
+			end
+		end
+	end
+	pp matrix
+
+	return matrix
+end
+
+#deleteSymbolArrayで指定した複数の文字をtextから削除
+#@params text 削除対象の文字列
+#@params deleteSymbolArray 削除したい文字の配列
+def removeToken(text,deleteSymbolArray=["\r","\n","\t"])
+	deleteSymbolArray.each do |symbol|
+		text.gsub!(symbol,"")
+	end
+	text.gsub!(/\u{00A0}/," ") #&nbsp;を削除
+     
+	return text
+end
+
+def makeHtmlSourceMatrixToArray(table)
+	htmlSource=String.new
+
+	#表配列をHTMLソースに変換
+	htmlSource+='<table border="1" width="800" style="table-layout: fixed" rules="all">'
+	table.each do |lineData|
+		htmlSource+='<tr>'
+		lineData.each do |row|
+			htmlSource+='<td>'+row.to_s+'</td>'
+		end
+		htmlSource+='</tr>'
+	end
+	htmlSource+='</table><br>'
+
+	pp htmlSource
+	return htmlSource
 end
 
 def joinUnitToNum(status,average,averageRatio) 
@@ -331,7 +388,7 @@ def calcRatio(num1,num2)
 end
 
 #メールを作成、送信
-def sendMail(status,average,htmlSource)
+def sendMail(htmlSource)
 	gmailSend=GmailSend.new($senderAddress,$gmailPassword)
 	#メール送信
 	text_html =Mail::Part.new do
